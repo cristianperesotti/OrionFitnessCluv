@@ -2,7 +2,7 @@
   "name": "Orion Fitness Club · Hipertrofia",
   "short_name": "Orion",
   "description": "Seguimiento de rutina de hipertrofia: pesos, repeticiones, RIR y progreso",
-  "start_url": "./orion.html",
+  "start_url": "./Index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
