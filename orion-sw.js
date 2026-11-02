@@ -1,5 +1,5 @@
 const CACHE = "orion-v1";
-const FILES = ["./orion.html", "./orion.webmanifest",
+const FILES = ["./index.html", "./orion.webmanifest",
   "./orion-icon-192.png", "./orion-icon-512.png", "./orion-icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
