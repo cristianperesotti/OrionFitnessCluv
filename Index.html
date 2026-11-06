@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orion · Cristian Peresotti</title>
+<title>Orion · Hipertrofia</title>
 <meta name="theme-color" content="#06344f">
 <link rel="manifest" href="orion.webmanifest">
 <link rel="icon" href="orion-icon-192.png">
@@ -105,7 +105,7 @@ footer button{background:none;border:0;color:var(--bordo);text-decoration:underl
 <body>
 <header>
   <img src="orion-icon-192.png" alt="Orion Fitness Club" class="logo">
-  <div><h1>Orion · Cristian Peresotti</h1>
+  <div><h1>Orion · Hipertrofia</h1>
   <p>3 días · pesos, repeticiones y RIR</p></div>
 </header>
 <nav id="tabs">
@@ -475,8 +475,45 @@ document.getElementById("tabs").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   tab=b.dataset.tab; render();
 });
+/* Respaldo con nombre de ejercicio en cada registro */
+function buildExport(){
+  const out={sessions:{},body:DB.body,seeded:true};
+  Object.keys(DB.sessions).sort().forEach(date=>{
+    out.sessions[date]={};
+    Object.keys(DB.sessions[date]).forEach(day=>{
+      out.sessions[date][day]={};
+      Object.keys(DB.sessions[date][day]).forEach(id=>{
+        const idx=+id.split("-")[1];
+        const ex=PLAN[day]&&PLAN[day].ex[idx];
+        out.sessions[date][day][id]=Object.assign({name:ex?ex[0]:"(ejercicio sin nombre)"},DB.sessions[date][day][id]);
+        out.sessions[date][day][id].name=ex?ex[0]:"(ejercicio sin nombre)";
+      });
+    });
+  });
+  return out;
+}
+/* Al importar: si el respaldo trae nombre, se ubica el ejercicio por nombre (aunque haya cambiado el orden del plan) */
+function normalizeImport(d){
+  const res={};
+  Object.keys(d.sessions).forEach(date=>{
+    Object.keys(d.sessions[date]).forEach(day=>{
+      Object.keys(d.sessions[date][day]).forEach(id=>{
+        const e=d.sessions[date][day][id];
+        let newId=id;
+        if(e.name&&PLAN[day]){
+          const k=PLAN[day].ex.findIndex(x=>x[0]===e.name);
+          if(k>=0) newId=exId(day,k);
+        }
+        delete e.name;
+        res[date]=res[date]||{}; res[date][day]=res[date][day]||{};
+        res[date][day][newId]=e;
+      });
+    });
+  });
+  d.sessions=res; return d;
+}
 document.getElementById("exp").addEventListener("click",()=>{
-  const blob=new Blob([JSON.stringify(DB)],{type:"application/json"});
+  const blob=new Blob([JSON.stringify(buildExport(),null,1)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
   a.download="respaldo-rutina-"+todayStr()+".json"; a.click();
 });
@@ -487,7 +524,7 @@ document.getElementById("file").addEventListener("change",e=>{
   r.onload=()=>{ try{
     const d=JSON.parse(r.result);
     if(!d.sessions||!d.body) throw 0;
-    if(confirm("Esto reemplaza los datos actuales por los del respaldo. ¿Continuar?")){ d.seeded=true; DB=d; save(); render(); }
+    if(confirm("Esto reemplaza los datos actuales por los del respaldo. ¿Continuar?")){ d.seeded=true; DB=normalizeImport(d); save(); render(); }
   }catch(_){ alert("El archivo no es un respaldo válido."); } };
   r.readAsText(f); e.target.value="";
 });
